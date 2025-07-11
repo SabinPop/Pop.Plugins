@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Pop.Plugin.Logging\src\Pop.Plugins.Logging.csproj" />
     <ProjectReference Include="..\..\Pop.Plugins.Abstractions\src\Pop.Plugins.Abstractions.csproj" />
   </ItemGroup>
 

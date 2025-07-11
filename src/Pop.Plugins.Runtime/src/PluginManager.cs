@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Pop.Plugins.Abstractions;
+using Pop.Plugins.Logging;
+using System.Reflection;
 
 namespace Pop.Plugins.Runtime;
 
@@ -50,7 +52,22 @@ internal class PluginManager : IPluginManager
             return;
         }
 
-        var plugin = (IPlugin)Activator.CreateInstance(type)!;
+        // Get the module implementation of IPluginLoggerConfigurator
+        // If not found, use the default implementation
+        var pluginLoggerConfigurator = pluginAssembly
+            .GetTypes()
+            .FirstOrDefault(t => typeof(IPluginLoggerConfigurator).IsAssignableFrom(t)
+                        && !t.IsAbstract
+                        && !t.IsInterface);
+
+        if (pluginLoggerConfigurator is null)
+        {
+            pluginLoggerConfigurator = typeof(DefaultPluginLoggerConfigurator);
+        }
+
+        object[] args = [(IPluginLoggerConfigurator)Activator.CreateInstance(pluginLoggerConfigurator)!];
+
+        var plugin = (IPlugin)Activator.CreateInstance(type, args)!;
         plugin.ConfigureModuleServices();
         plugin.ConfigureHostServices(_sharedServices);
 
