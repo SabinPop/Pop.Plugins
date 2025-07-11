@@ -7,21 +7,27 @@ public abstract class PluginBase: IPlugin
 {
     protected PluginBase(IPluginLoggerConfigurator pluginLoggerConfigurator)
     {
-        PluginAssembly = GetType().Assembly;
-        Name = PluginAssembly.FullName!;
-        PluginServices = new ServiceCollection();
-        pluginLoggerConfigurator.ConfigureLogging(PluginServices, Name);
+        Assembly = GetType().Assembly;
+        Name = Assembly.FullName!;
+        Services = new ServiceCollection();
+        pluginLoggerConfigurator.ConfigureLogging(Services, Name);
     }
 
     public string Name { get; private set; }
 
-    public Assembly PluginAssembly { get; private set; }
+    public Assembly Assembly { get; private set; }
 
-    public IServiceCollection PluginServices { get; }
+    public IServiceCollection Services { get; }
 
-    public IServiceProvider? PluginServiceProvider { get; set; }
+    public IServiceProvider? ServiceProvider { get; set; }
 
-    public abstract void ConfigureHostServices(IServiceCollection services);
+    public virtual void ConfigureHostServices(IServiceCollection services)
+    {
 
-    public abstract void ConfigureModuleServices();
+    }
+
+    public virtual void ConfigurePluginServices()
+    {
+
+    }
 }

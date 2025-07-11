@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Pop.Plugins.Abstractions;
 using Pop.Plugins.Logging;
-using System.Reflection;
 
 namespace Pop.Plugins.Runtime;
 
@@ -10,7 +9,7 @@ internal class PluginManager : IPluginManager
     private readonly IServiceCollection _sharedServices;
     private readonly List<IPlugin> _plugins = [];
     private readonly List<Action<IServiceCollection>> _sharedRegistrations = [];
-    private readonly Dictionary<string, (IPlugin Plugin, PluginLoadContext Context)> _loaded = [];
+    private readonly Dictionary<string, (IPlugin Plugin, PluginLoadContext Context)> _loadedPlugins = [];
 
     public string PluginsFolder { get; private set; }
     public IReadOnlyList<IPlugin> Plugins => _plugins;
@@ -34,7 +33,7 @@ internal class PluginManager : IPluginManager
 
     public void LoadModule(string dllPath)
     {
-        if (_loaded.ContainsKey(dllPath))
+        if (_loadedPlugins.ContainsKey(dllPath))
         {
             return;
         }
@@ -66,31 +65,31 @@ internal class PluginManager : IPluginManager
         }
 
         object[] args = [(IPluginLoggerConfigurator)Activator.CreateInstance(pluginLoggerConfigurator)!];
-
         var plugin = (IPlugin)Activator.CreateInstance(type, args)!;
-        plugin.ConfigureModuleServices();
+        plugin.ConfigurePluginServices();
         plugin.ConfigureHostServices(_sharedServices);
 
-        foreach (var reg in _sharedRegistrations)
+        foreach (var registration in _sharedRegistrations)
         {
-            reg(plugin.PluginServices);
+            registration(plugin.Services);
         }
 
         _plugins.Add(plugin);
-        _loaded[dllPath] = (plugin, loadContext);
+        _loadedPlugins[dllPath] = (plugin, loadContext);
     }
 
     public void UnloadModule(string dllPath)
     {
-        if (!_loaded.TryGetValue(dllPath, out var tuple))
+        if (!_loadedPlugins.TryGetValue(dllPath, out var tuple))
         {
             return;
         }
 
-        _plugins.Remove(tuple.Plugin);
-        _loaded.Remove(dllPath);
+        (var plugin, var pluginContext) = tuple;
+        _plugins.Remove(plugin);
+        _loadedPlugins.Remove(dllPath);
+        pluginContext.Unload();
 
-        tuple.Context.Unload();
         GC.Collect();
         GC.WaitForPendingFinalizers();
     }

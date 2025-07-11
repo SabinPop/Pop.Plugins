@@ -7,13 +7,13 @@ public interface IPlugin
 {
     string Name { get; }
 
-    Assembly PluginAssembly { get; }
+    Assembly Assembly { get; }
 
-    IServiceCollection PluginServices { get; }
+    IServiceCollection Services { get; }
 
-    IServiceProvider? PluginServiceProvider { get; }
+    IServiceProvider? ServiceProvider { get; }
 
     void ConfigureHostServices(IServiceCollection services);
 
-    void ConfigureModuleServices();
+    void ConfigurePluginServices();
 }
