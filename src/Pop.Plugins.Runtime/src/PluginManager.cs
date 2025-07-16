@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Pop.Plugins.Abstractions;
+using Pop.Plugins.Abstractions.Settings;
 using Pop.Plugins.Logging;
+using Pop.Plugins.Runtime.Extensions;
 
 namespace Pop.Plugins.Runtime;
 
@@ -40,8 +42,9 @@ internal class PluginManager : IPluginManager
 
         var loadContext = new PluginLoadContext(dllPath);
         var pluginAssembly = loadContext.LoadFromAssemblyPath(dllPath);
-        var type = pluginAssembly
-            .GetTypes()
+        Type[] pluginAssemblyTypes = pluginAssembly.GetTypes();
+        
+        var type = pluginAssemblyTypes
             .FirstOrDefault(t => typeof(IPlugin).IsAssignableFrom(t)
                         && !t.IsAbstract
                         && !t.IsInterface);
@@ -53,19 +56,24 @@ internal class PluginManager : IPluginManager
 
         // Get the module implementation of IPluginLoggerConfigurator
         // If not found, use the default implementation
-        var pluginLoggerConfigurator = pluginAssembly
-            .GetTypes()
-            .FirstOrDefault(t => typeof(IPluginLoggerConfigurator).IsAssignableFrom(t)
+        var pluginLoggingConfigurator = pluginAssemblyTypes
+            .FirstOrDefault(t => typeof(IPluginLoggingConfigurator).IsAssignableFrom(t)
                         && !t.IsAbstract
-                        && !t.IsInterface);
+                        && !t.IsInterface) 
+            ?? typeof(PluginLoggingConfigurator);
 
-        if (pluginLoggerConfigurator is null)
-        {
-            pluginLoggerConfigurator = typeof(DefaultPluginLoggerConfigurator);
-        }
+        var pluginSettingsType = pluginAssemblyTypes
+            .FirstOrDefault(t => typeof(PluginSettings).IsAssignableFrom(t)
+                        && !t.IsAbstract
+                        && !t.IsInterface)
+            ?? typeof(PluginSettings);
 
-        object[] args = [(IPluginLoggerConfigurator)Activator.CreateInstance(pluginLoggerConfigurator)!];
+        var pluginSettings = PluginConfigurationLoader.LoadSettings(dllPath, pluginSettingsType);
+
+        object[] args = [(IPluginLoggingConfigurator)Activator.CreateInstance(pluginLoggingConfigurator)!];
         var plugin = (IPlugin)Activator.CreateInstance(type, args)!;
+
+        plugin.Services.AddPluginOptions(pluginSettings);
         plugin.ConfigurePluginServices();
         plugin.ConfigureHostServices(_sharedServices);
 
@@ -73,6 +81,8 @@ internal class PluginManager : IPluginManager
         {
             registration(plugin.Services);
         }
+
+        plugin.BuildServiceProvider();
 
         _plugins.Add(plugin);
         _loadedPlugins[dllPath] = (plugin, loadContext);

@@ -1,44 +1,29 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Pop.Plugins.Abstractions;
+using Pop.Plugins.Abstractions.Settings;
 
 namespace Pop.Plugins.Runtime.Extensions;
 
 public static class PluginServiceCollectionExtensions
 {
-    public static IServiceCollection AddPluginManager(
-        this IServiceCollection services,
-        Action<PluginManagerOptions> setup,
-        Action<IPluginManager>? configure = null)
+    public static IPluginServiceCollection AddPluginOptions(this IPluginServiceCollection services, PluginSettings pluginSettings)
     {
-        var options = new PluginManagerOptions();
-        setup(options);
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(pluginSettings);
 
-        services.TryAddSingleton<IPluginManager>(sp =>
-        {
-            var pluginManager = new PluginManager(options.PluginsFolder, services);
-
-            configure?.Invoke(pluginManager);
-
-            if (options.AutoLoadPlugins)
-            {
-                if (options.PluginFilter is not null)
-                {
-                    foreach (var dll in Directory.GetFiles(options.PluginsFolder, "*.dll")
-                                                 .Where(options.PluginFilter))
-                    {
-                        pluginManager.LoadModule(dll);
-                    }
-                }
-                else
-                {
-                    pluginManager.LoadModules();
-                }
-            }
-
-            return pluginManager;
-        });
-
+        // Inject PluginSettings via IOptions<PluginSettings>
+        services.AddSingleton(pluginSettings);
+        services.AddSingleton<IOptions<PluginSettings>>(new OptionsWrapper<PluginSettings>(pluginSettings));
+        
         return services;
+    }
+
+    public static IServiceProvider BuildServiceProvider(this IPluginServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        // Build the service provider from the collection
+        return (services as IServiceCollection).BuildServiceProvider();
     }
 }
