@@ -25,15 +25,15 @@ internal class PluginManager : IPluginManager
     public void RegisterSharedServices(Action<IServiceCollection> registration)
         => _sharedRegistrations.Add(registration);
 
-    public void LoadModules()
+    public void LoadPlugins()
     {
         foreach (var dll in Directory.GetFiles(PluginsFolder, "*.dll"))
         {
-            LoadModule(dll);
+            LoadPlugin(dll);
         }
     }
 
-    public void LoadModule(string dllPath)
+    public void LoadPlugin(string dllPath)
     {
         if (_loadedPlugins.ContainsKey(dllPath))
         {
@@ -54,7 +54,7 @@ internal class PluginManager : IPluginManager
             return;
         }
 
-        // Get the module implementation of IPluginLoggerConfigurator
+        // Get the plugin implementation of IPluginLoggerConfigurator
         // If not found, use the default implementation
         var pluginLoggingConfigurator = pluginAssemblyTypes
             .FirstOrDefault(t => typeof(IPluginLoggingConfigurator).IsAssignableFrom(t)
@@ -88,7 +88,7 @@ internal class PluginManager : IPluginManager
         _loadedPlugins[dllPath] = (plugin, loadContext);
     }
 
-    public void UnloadModule(string dllPath)
+    public void UnloadPlugin(string dllPath)
     {
         if (!_loadedPlugins.TryGetValue(dllPath, out var tuple))
         {

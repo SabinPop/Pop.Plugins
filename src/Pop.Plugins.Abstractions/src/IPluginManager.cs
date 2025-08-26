@@ -8,11 +8,11 @@ public interface IPluginManager
 
     IReadOnlyList<IPlugin> Plugins { get; }
 
-    void LoadModules();
+    void LoadPlugins();
 
-    void LoadModule(string dllPath);
+    void LoadPlugin(string dllPath);
 
-    void UnloadModule(string dllPath);
+    void UnloadPlugin(string dllPath);
 
     void RegisterSharedServices(Action<IServiceCollection> registration);
 }

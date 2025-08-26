@@ -27,12 +27,12 @@ public static class HostServiceCollectionExtensions
                     foreach (var dll in Directory.GetFiles(options.PluginsFolder, "*.dll")
                                                  .Where(options.PluginFilter))
                     {
-                        pluginManager.LoadModule(dll);
+                        pluginManager.LoadPlugin(dll);
                     }
                 }
                 else
                 {
-                    pluginManager.LoadModules();
+                    pluginManager.LoadPlugins();
                 }
             }
 

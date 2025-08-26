@@ -7,10 +7,10 @@ internal class PluginLoadContext : AssemblyLoadContext
 {
     private readonly AssemblyDependencyResolver _resolver;
 
-    public PluginLoadContext(string modulePath)
+    public PluginLoadContext(string pluginPath)
         : base(isCollectible: true)
     {
-        _resolver = new AssemblyDependencyResolver(modulePath);
+        _resolver = new AssemblyDependencyResolver(pluginPath);
     }
 
     protected override Assembly? Load(AssemblyName assemblyName)
