@@ -1,15 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>Pop.Plugins.Abstractions</AssemblyName>
-    <RootNamespace>Pop.Plugins.Abstractions</RootNamespace>
+    <AssemblyName>Pop.Plugins.Logging.Abstractions</AssemblyName>
+    <RootNamespace>Pop.Plugins.Logging.Abstractions</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Pop.Plugins.Logging.Abstractions\src\Pop.Plugins.Logging.Abstractions.csproj" />
     <ProjectReference Include="..\..\Pop.Plugins.DependencyInjection.Abstractions\src\Pop.Plugins.DependencyInjection.Abstractions.csproj" />
   </ItemGroup>
 </Project>

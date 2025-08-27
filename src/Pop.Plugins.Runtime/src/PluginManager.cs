@@ -2,10 +2,14 @@
 using Pop.Plugins.Abstractions;
 using Pop.Plugins.Abstractions.Settings;
 using Pop.Plugins.Logging;
+using Pop.Plugins.Logging.Abstractions;
 using Pop.Plugins.Runtime.Extensions;
 
 namespace Pop.Plugins.Runtime;
 
+/// <summary>
+/// Manages the loading, unloading, and configuration of plugins at runtime.
+/// </summary>
 internal class PluginManager : IPluginManager
 {
     private readonly IServiceCollection _sharedServices;
@@ -13,18 +17,37 @@ internal class PluginManager : IPluginManager
     private readonly List<Action<IServiceCollection>> _sharedRegistrations = [];
     private readonly Dictionary<string, (IPlugin Plugin, PluginLoadContext Context)> _loadedPlugins = [];
 
+    /// <summary>
+    /// Gets the folder path where plugin assemblies (DLLs) are located.
+    /// </summary>
     public string PluginsFolder { get; private set; }
+
+    /// <summary>
+    /// Gets a read-only list of currently loaded plugins.
+    /// </summary>
     public IReadOnlyList<IPlugin> Plugins => _plugins;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PluginManager"/> class.
+    /// </summary>
+    /// <param name="pluginsFolder">The folder path containing plugin assemblies.</param>
+    /// <param name="sharedServices">The host application's shared service collection.</param>
     public PluginManager(string pluginsFolder, IServiceCollection sharedServices)
     {
         PluginsFolder = pluginsFolder;
         _sharedServices = sharedServices;
     }
 
+    /// <summary>
+    /// Registers services that should be shared across all plugins.
+    /// </summary>
+    /// <param name="registration">The action to configure shared services.</param>
     public void RegisterSharedServices(Action<IServiceCollection> registration)
         => _sharedRegistrations.Add(registration);
 
+    /// <summary>
+    /// Loads all plugin assemblies from the configured plugins folder.
+    /// </summary>
     public void LoadPlugins()
     {
         foreach (var dll in Directory.GetFiles(PluginsFolder, "*.dll"))
@@ -33,6 +56,10 @@ internal class PluginManager : IPluginManager
         }
     }
 
+    /// <summary>
+    /// Loads a specific plugin assembly from the given path.
+    /// </summary>
+    /// <param name="dllPath">The path to the plugin assembly file.</param>
     public void LoadPlugin(string dllPath)
     {
         if (_loadedPlugins.ContainsKey(dllPath))
@@ -43,7 +70,7 @@ internal class PluginManager : IPluginManager
         var loadContext = new PluginLoadContext(dllPath);
         var pluginAssembly = loadContext.LoadFromAssemblyPath(dllPath);
         Type[] pluginAssemblyTypes = pluginAssembly.GetTypes();
-        
+
         var type = pluginAssemblyTypes
             .FirstOrDefault(t => typeof(IPlugin).IsAssignableFrom(t)
                         && !t.IsAbstract
@@ -54,12 +81,12 @@ internal class PluginManager : IPluginManager
             return;
         }
 
-        // Get the plugin implementation of IPluginLoggerConfigurator
+        // Get the plugin implementation of IPluginLoggingConfigurator
         // If not found, use the default implementation
         var pluginLoggingConfigurator = pluginAssemblyTypes
             .FirstOrDefault(t => typeof(IPluginLoggingConfigurator).IsAssignableFrom(t)
                         && !t.IsAbstract
-                        && !t.IsInterface) 
+                        && !t.IsInterface)
             ?? typeof(PluginLoggingConfigurator);
 
         var pluginSettingsType = pluginAssemblyTypes
@@ -88,6 +115,10 @@ internal class PluginManager : IPluginManager
         _loadedPlugins[dllPath] = (plugin, loadContext);
     }
 
+    /// <summary>
+    /// Unloads a specific plugin assembly and releases its resources.
+    /// </summary>
+    /// <param name="dllPath">The path to the plugin assembly file that was previously loaded.</param>
     public void UnloadPlugin(string dllPath)
     {
         if (!_loadedPlugins.TryGetValue(dllPath, out var tuple))

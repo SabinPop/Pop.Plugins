@@ -4,27 +4,30 @@
 
 ---
 
-## 📦 Packages
+## 📦 Packages & Dependencies
 
-| Package                   | Description                                                       |
-|---------------------------|-------------------------------------------------------------------|
-| `Pop.Plugins.Abstractions` | Interfaces and base types required to implement plugins            |
-| `Pop.Plugins.Logging`      | Logging configuration helpers for plugin-specific log categories   |
-| `Pop.Plugins.Runtime`      | Plugin loader and runtime manager for loading/unloading plugins    |
+| Package                                                                                                           | Description                                                       |
+|-------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| [`Pop.Plugins.Abstractions`](src/Pop.Plugins.Abstractions/src/README.md)                                          | Interfaces and base types required to implement plugins           |
+| [`Pop.Plugins.DependencyInjection.Abstractions`](src/Pop.Plugins.DependencyInjection.Abstractions/src/README.md)  | Abstractions for plugin DI container                              |
+| [`Pop.Plugins.Logging`](src/Pop.Plugin.Logging/src/README.md)                                                     | Logging configuration helpers for plugin-specific log categories  |
+| [`Pop.Plugins.Logging.Abstractions`](src/Pop.Plugins.Logging.Abstractions/src/README.md)                          | Logging abstractions for plugin logging                           |
+| [`Pop.Plugins.Runtime`](src/Pop.Plugins.Runtime/src/README.md)                                                    | Plugin loader and runtime manager for loading/unloading plugins   |
+
+**Required NuGet packages:**
+- Microsoft.Extensions.Caching.Memory (for service resolution caching)
+- Microsoft.Extensions.DependencyInjection (for DI)
+- Microsoft.Extensions.Options (for options/configuration)
 
 ---
 
-## 🚀 Installation
+## 📝 Documentation
+- All public and internal APIs are documented with XML comments (in English).
+- See source code for inline documentation of types, methods, parameters, and return values.
 
-Add the following packages to your project via NuGet (when published) or project reference:
+---
 
-```bash
-dotnet add package Pop.Plugins.Abstractions
-dotnet add package Pop.Plugins.Runtime
-dotnet add package Pop.Plugins.Logging
-```
-
-## 🔧 Getting Started
+## 🚀 Getting Started
 ### 1. Register the PluginManager in your host application:
 
 ```csharp
@@ -43,21 +46,20 @@ configure: pluginManager =>
 });
 ```
 
-## 2. Create a Plugin
-### Create a class library project and reference Pop.Plugins.Abstractions. Then implement your plugin:
+### 2. Create a Plugin
+Create a class library project and reference `Pop.Plugins.Abstractions`. Then implement your plugin:
 
 ```csharp
-public class MyPlugin : BasePlugin
+public class MyPlugin : PluginBase
 {
-    public MyPlugin(IPluginLoggerConfigurator pluginLoggerConfigurator)
-      : base(pluginLoggerConfigurator)
+    public MyPlugin(IPluginLoggingConfigurator pluginLoggerConfigurator, PluginSettings pluginSettings)
+      : base(pluginLoggerConfigurator, pluginSettings)
     {
-      
     }
 
-    public override void ConfigureModuleServices()
+    public override void ConfigurePluginServices()
     {
-        PluginServices.AddSingleton<IMyPluginService, MyPluginService>();
+        Services.AddSingleton<IMyPluginService, MyPluginService>();
     }
 
     public override void ConfigureHostServices(IServiceCollection services)
@@ -67,17 +69,63 @@ public class MyPlugin : BasePlugin
 }
 ```
 
-## 3. Deploy the Plugin
+### 3. Plugin Configuration
+- Place a JSON settings file next to your plugin DLL (e.g., `MyPlugin.settings.json`).
+- The framework will automatically load settings using `PluginConfigurationLoader`.
+
+### 4. Deploy the Plugin
 - Build your plugin project
-- Copy the resulting .dll into the plugins/ folder of your host application
+- Copy the resulting `.dll` and `.settings.json` into the plugins/ folder of your host application
 - On next run, it will be automatically loaded
 
- ## 🔄 Features
-- Custom AssemblyLoadContext per plugin
-- Per-plugin dependency injection container
-- Plugin-scoped logging (ILogger<MyService> uses plugin category)
+---
+
+## 🔄 Features
+- Automatic loading of plugin configuration from JSON
+- Custom `AssemblyLoadContext` per plugin for isolation
 - Optional shared service registration
+- Per-plugin dependency injection container
+- Plugin-scoped logging (`ILogger<MyService>` uses plugin category)
 - Plugin unload support (experimental)
+- Service resolution with caching (`PluginServiceResolver`)
 
+---
 
+## 🧩 Plugin Development Guide
+- Document your public APIs with XML comments
+- Implement your plugin by inheriting from `PluginBase` or `IPlugin`
+- Register host/shared services in `ConfigureHostServices`
+- Register plugin-specific services in `ConfigurePluginServices`
+- Use `PluginSettings` for configuration and `PluginLoggingSettings` for logging
+
+---
+
+## 📚 API Reference
+- All types, methods, and parameters are documented in source code with XML comments
+- See source for details on:
+  - `IPlugin`
+  - `IPluginManager`
+  - `PluginBase`
+  - `PluginConfigurationLoader`
+  - `PluginLoadContext`
+  - `PluginManager`
+  - `PluginServiceResolver`
+
+---
+
+## 🤝 Contribution Guidelines
+- Ensure all new code is covered by XML documentation
+- Follow .NET coding conventions and document all public/internal APIs
+- Fork the repository and create a feature branch
+- Submit pull requests with clear descriptions
+
+---
+
+## 📄 License
+MIT License
+
+---
+
+## 💬 Support / Contact
+For issues, feature requests, or questions, open a GitHub issue or contact the maintainer.
 

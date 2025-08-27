@@ -1,20 +1,23 @@
 ﻿namespace Pop.Plugins.Runtime;
 
+/// <summary>
+/// Configuration options for the plugin manager.
+/// </summary>
 public class PluginManagerOptions
 {
     /// <summary>
-    /// Folderul din care sunt încărcate pluginurile (fișiere .dll).
+    /// Gets or sets the folder path where plugin assemblies (DLLs) are located.
     /// </summary>
     public string PluginsFolder { get; set; } = string.Empty;
 
     /// <summary>
-    /// Filtru opțional pentru a selecta ce DLL-uri se încarcă.
-    /// Returnează true dacă DLL-ul trebuie încărcat.
+    /// Gets or sets an optional filter to determine which DLLs should be loaded as plugins.
+    /// Returns true if the DLL should be loaded.
     /// </summary>
     public Func<string, bool>? PluginFilter { get; set; }
 
     /// <summary>
-    /// Dacă este true, încarcă automat pluginurile la inițializare.
+    /// Gets or sets whether plugins should be automatically loaded during initialization.
     /// </summary>
     public bool AutoLoadPlugins { get; set; } = true;
 }
